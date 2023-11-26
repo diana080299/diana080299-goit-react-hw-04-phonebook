@@ -1,44 +1,29 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
 import { ContactForm } from './ContactForm/ContactForm';
 import { Filter } from './Filter/Filter';
 import { ContactList } from './ContactList/ContactList';
 
-export class App extends Component {
-  state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
-    filter: '',
-  };
+export function App() {
+  const [contacts, setContacts] = useState(() => {
+    return JSON.parse(window.localStorage.getItem('contacts')) ?? [];
+  });
 
-  componentDidMount() {
+  const [filter, setFilter] = useState('');
+
+  useEffect(() => {
     const contacts = localStorage.getItem('contacts');
-    const parseContacts = JSON.parse(contacts) || [];
-    if (parseContacts) {
-      this.setState({ contacts: parseContacts });
-    } else {
-      localStorage.removeItem('contacts');
+    const parsedContacts = JSON.parse(contacts);
+    if (parsedContacts) {
+      setContacts(parsedContacts);
     }
-  }
+  }, []);
 
-  componentDidUpdate(prevState) {
-    const { contacts } = this.state;
-    if (contacts !== prevState.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(contacts));
-    }
-  }
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
-  changeFilter = event => {
-    this.setState({ filter: event.target.value });
-  };
-
-  formHandleSubmit = (name, number) => {
-    const { contacts } = this.state;
-
+  const formHandleSubmit = (name, number) => {
     const newContact = {
       id: nanoid(),
       name,
@@ -49,52 +34,51 @@ export class App extends Component {
     if (isContactExists) {
       alert(`${name} is already in contacts.`);
     } else {
-      this.setState(prevState => ({
-        contacts: [...prevState.contacts, newContact],
-      }));
+      setContacts([...contacts, newContact]);
     }
   };
 
-  handleDelete = contactId => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== contactId),
-    }));
+  const handleDelete = contactId => {
+    return setContacts(contacts.filter(contact => contact.id !== contactId));
   };
 
-  filterContacts = () => {
-    const contactsToLower = this.state.filter.toLowerCase();
-    return this.state.contacts.filter(contact => {
-      const contactName = contact.name.toLowerCase();
-      return contactName.includes(contactsToLower);
-    });
-  };
-
-  render() {
-    const { filter } = this.state;
-    const visible = this.filterContacts();
-    return (
-      <div
-        style={{
-          display: 'flex',
-          gap: '40px',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          fontSize: 30,
-          color: '#010101',
-          marginLeft: '20px',
-        }}
-      >
-        <h1 style={{ marginLeft: '30px' }}>Phonebook</h1>
-        <ContactForm onSubmit={this.formHandleSubmit} />
-        <h2 style={{ marginLeft: '30px' }}>Contacts</h2>
-        <Filter value={filter} onChange={this.changeFilter} />
-        {this.state.contacts.length === 0 ? (
-          <p style={{ color: 'red' }}>Your contacts list is empty.</p>
-        ) : (
-          <ContactList contacts={visible} onDelete={this.handleDelete} />
-        )}
-      </div>
+  const filterContacts = () => {
+    const contactsToLower = filter.toLowerCase();
+    return contacts.filter(contact =>
+      contact.name.toLowerCase().includes(contactsToLower)
     );
-  }
+  };
+
+  const changeFilter = event => {
+    setFilter(event.target.value);
+  };
+
+  const visible = filterContacts();
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: '40px',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        fontSize: 30,
+        color: '#010101',
+        marginLeft: '20px',
+      }}
+    >
+      <h1 style={{ marginLeft: '30px' }}>Phonebook</h1>
+      <ContactForm onSubmit={formHandleSubmit} />
+      <h2 style={{ marginLeft: '30px' }}>Contacts</h2>
+      <Filter value={filter} onChange={changeFilter} />
+
+      {contacts.length === 0 ? (
+        <p style={{ color: 'red' }}>Your contacts list is empty.</p>
+      ) : visible.length === 0 ? (
+        <p style={{ color: 'grey' }}>Contacts is undefined with this name.</p>
+      ) : (
+        <ContactList contacts={visible} onDelete={handleDelete} />
+      )}
+    </div>
+  );
 }

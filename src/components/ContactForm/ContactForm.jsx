@@ -1,66 +1,67 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import { nanoid } from 'nanoid';
 import { Form, Label, Input, Button } from './ContactForm.styled';
 
-export class ContactForm extends Component {
-  state = {
-    name: '',
-    number: '',
-  };
-  nameId = nanoid();
-  numberId = nanoid();
+export function ContactForm({ onSubmit }) {
+  const [name, setName] = useState('');
+  const [number, setNumber] = useState('');
 
-  handleChange = e => {
+  const nameId = nanoid();
+  const numberId = nanoid();
+
+  const handleChange = e => {
     const { name, value } = e.currentTarget;
-    this.setState({ [name]: value });
+    switch (name) {
+      case 'name':
+        setName(value);
+        break;
+      case 'number':
+        setNumber(value);
+        break;
+      default:
+        return;
+    }
   };
 
-  handleSubmit = e => {
+  const handleSubmit = e => {
     e.preventDefault();
-    const { name, number } = this.state;
-    const newContact = {
-      id: nanoid(),
-      name,
-      number,
-    };
-    this.props.onSubmit(newContact.name, newContact.number);
-    this.reset();
+    onSubmit(name, number);
+    reset();
   };
 
-  reset = () => {
-    this.setState({ name: '', number: '' });
+  const reset = () => {
+    setName('');
+    setNumber('');
   };
-  render() {
-    return (
-      <Form onSubmit={this.handleSubmit}>
-        <Label htmlFor={this.nameId}>
-          {' '}
-          Name
-          <Input
-            type="text"
-            name="name"
-            value={this.state.name}
-            onChange={this.handleChange}
-            required
-            id={this.nameId}
-            placeholder="Entry your name"
-          />
-        </Label>
-        <Label htmlFor={this.numberId}>
-          Number
-          <Input
-            type="text"
-            name="number"
-            value={this.state.number}
-            onChange={this.handleChange}
-            required
-            id={this.numberId}
-            placeholder="Entry your number"
-          />
-        </Label>
 
-        <Button type="submit">Add contacts</Button>
-      </Form>
-    );
-  }
+  return (
+    <Form onSubmit={handleSubmit}>
+      <Label htmlFor={nameId}>
+        Name
+        <Input
+          type="text"
+          name="name"
+          value={name}
+          onChange={handleChange}
+          required
+          id={nameId}
+          placeholder="Entry your name"
+        />
+      </Label>
+      <Label htmlFor={numberId}>
+        Number
+        <Input
+          type="text"
+          name="number"
+          value={number}
+          onChange={handleChange}
+          required
+          id={numberId}
+          placeholder="Entry your number"
+        />
+      </Label>
+
+      <Button type="submit">Add contacts</Button>
+    </Form>
+  );
 }
